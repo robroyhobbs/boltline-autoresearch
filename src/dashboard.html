@@ -1,0 +1,1035 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Boltline AutoResearch Dashboard</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+        background: #0d1117;
+        color: #c9d1d9;
+        padding: 24px;
+        line-height: 1.5;
+      }
+      h1 {
+        color: #58a6ff;
+        font-size: 1.4rem;
+        margin-bottom: 8px;
+      }
+      .subtitle {
+        color: #8b949e;
+        font-size: 0.8rem;
+        margin-bottom: 24px;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+      .stat-card {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        padding: 16px;
+      }
+      .stat-card .label {
+        color: #8b949e;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .stat-card .value {
+        color: #58a6ff;
+        font-size: 1.6rem;
+        font-weight: bold;
+        margin-top: 4px;
+      }
+      .section {
+        background: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        padding: 16px;
+        margin-bottom: 24px;
+      }
+      .section h2 {
+        color: #c9d1d9;
+        font-size: 1rem;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #30363d;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.8rem;
+      }
+      th {
+        text-align: left;
+        color: #8b949e;
+        font-weight: 600;
+        padding: 8px 12px;
+        border-bottom: 1px solid #30363d;
+        text-transform: uppercase;
+        font-size: 0.7rem;
+        letter-spacing: 0.5px;
+      }
+      td {
+        padding: 8px 12px;
+        border-bottom: 1px solid #21262d;
+      }
+      tr:hover td {
+        background: #1c2128;
+      }
+      .score-good {
+        color: #3fb950;
+      }
+      .score-mid {
+        color: #d29922;
+      }
+      .score-low {
+        color: #f85149;
+      }
+      .cost {
+        color: #d2a8ff;
+      }
+      .duration {
+        color: #8b949e;
+      }
+      canvas {
+        width: 100%;
+        height: 200px;
+        display: block;
+      }
+      .btn-promote {
+        background: #238636;
+        color: #fff;
+        border: 1px solid #2ea043;
+        border-radius: 4px;
+        padding: 4px 12px;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 0.75rem;
+      }
+      .btn-promote:hover {
+        background: #2ea043;
+      }
+      .btn-promote:disabled {
+        background: #21262d;
+        border-color: #30363d;
+        color: #8b949e;
+        cursor: not-allowed;
+      }
+      .empty {
+        color: #8b949e;
+        font-style: italic;
+        padding: 24px;
+        text-align: center;
+      }
+      .error {
+        color: #f85149;
+      }
+      .refresh-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+      .refresh-bar .timer {
+        color: #8b949e;
+        font-size: 0.75rem;
+      }
+      .badge {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 0.7rem;
+        font-weight: 600;
+      }
+      .badge-type {
+        background: #1f3a5f;
+        color: #58a6ff;
+      }
+      .badge-section {
+        background: #2d1f3a;
+        color: #d2a8ff;
+      }
+      .badge-difficulty-easy {
+        background: #1a3a2a;
+        color: #3fb950;
+      }
+      .badge-difficulty-medium {
+        background: #3a2f1a;
+        color: #d29922;
+      }
+      .badge-difficulty-hard {
+        background: #3a1a1a;
+        color: #f85149;
+      }
+      .recommendations {
+        border-color: #58a6ff;
+      }
+      .rec-item {
+        padding: 12px;
+        margin-bottom: 8px;
+        border-radius: 4px;
+        border-left: 3px solid #30363d;
+      }
+      .rec-item.action {
+        border-left-color: #3fb950;
+        background: #0d1f0d;
+      }
+      .rec-item.info {
+        border-left-color: #58a6ff;
+        background: #0d1520;
+      }
+      .rec-item.waiting {
+        border-left-color: #d29922;
+        background: #1a1500;
+      }
+      .rec-title {
+        font-weight: 600;
+        font-size: 0.85rem;
+        margin-bottom: 4px;
+      }
+      .rec-title .icon {
+        margin-right: 4px;
+      }
+      .rec-detail {
+        color: #8b949e;
+        font-size: 0.75rem;
+        line-height: 1.6;
+      }
+      .rec-detail code {
+        background: #0d1117;
+        padding: 1px 5px;
+        border-radius: 3px;
+        color: #79c0ff;
+        font-size: 0.7rem;
+      }
+      .rec-progress {
+        margin-top: 6px;
+        background: #21262d;
+        border-radius: 3px;
+        height: 6px;
+        overflow: hidden;
+      }
+      .rec-progress-bar {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 0.3s;
+      }
+      .rec-progress-bar.green {
+        background: #3fb950;
+      }
+      .rec-progress-bar.yellow {
+        background: #d29922;
+      }
+      .rec-progress-bar.blue {
+        background: #58a6ff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="refresh-bar">
+      <div>
+        <h1>Boltline AutoResearch</h1>
+        <div class="subtitle">
+          Autonomous experiment runner for marketing content optimization
+        </div>
+      </div>
+      <div class="timer" id="timer">Refreshing in 60s</div>
+    </div>
+
+    <div class="stats" id="stats">
+      <div class="stat-card">
+        <div class="label">Total Experiments</div>
+        <div class="value" id="stat-total">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Avg Production Score</div>
+        <div class="value" id="stat-prod">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Avg Enhanced Score</div>
+        <div class="value" id="stat-enhanced">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Total Budget Spent</div>
+        <div class="value" id="stat-budget">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Staged Configs</div>
+        <div class="value" id="stat-staged">--</div>
+      </div>
+    </div>
+
+    <div class="section recommendations" id="recs-section">
+      <h2>Recommendations & Next Steps</h2>
+      <div id="recs-container">
+        <div class="empty">Analyzing experiment data...</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Score Trend</h2>
+      <canvas id="chart" height="200"></canvas>
+    </div>
+
+    <div class="section">
+      <h2>Recent Experiment Results</h2>
+      <div id="results-container"><div class="empty">Loading...</div></div>
+    </div>
+
+    <div class="section">
+      <h2>Staged Configs</h2>
+      <div id="staged-container"><div class="empty">Loading...</div></div>
+    </div>
+
+    <script>
+      (function () {
+        let countdown = 60;
+        let resultsData = [];
+        let stagedData = [];
+
+        function scoreClass(score) {
+          if (score >= 0.7) return "score-good";
+          if (score >= 0.4) return "score-mid";
+          return "score-low";
+        }
+
+        function difficultyClass(d) {
+          return "badge-difficulty-" + (d || "medium");
+        }
+
+        function formatDuration(ms) {
+          if (!ms) return "--";
+          if (ms < 1000) return ms + "ms";
+          return (ms / 1000).toFixed(1) + "s";
+        }
+
+        function formatCost(usd) {
+          if (usd === undefined || usd === null) return "--";
+          return "$" + usd.toFixed(4);
+        }
+
+        function formatTime(ts) {
+          if (!ts) return "--";
+          var d = new Date(ts);
+          return (
+            d.toLocaleDateString() +
+            " " +
+            d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+          );
+        }
+
+        async function fetchResults() {
+          try {
+            var res = await fetch("/api/results");
+            var data = await res.json();
+            resultsData = data.results || [];
+            renderResults();
+            updateStats();
+            drawChart();
+            renderRecommendations();
+          } catch (e) {
+            document.getElementById("results-container").textContent =
+              "Failed to load results";
+          }
+        }
+
+        async function fetchStaged() {
+          try {
+            var res = await fetch("/api/staged");
+            var data = await res.json();
+            stagedData = data.configs || [];
+            renderStaged();
+            document.getElementById("stat-staged").textContent =
+              stagedData.length;
+            renderRecommendations();
+          } catch (e) {
+            document.getElementById("staged-container").textContent =
+              "Failed to load staged configs";
+          }
+        }
+
+        function updateStats() {
+          var total = resultsData.length;
+          document.getElementById("stat-total").textContent = total;
+
+          if (total === 0) {
+            document.getElementById("stat-prod").textContent = "--";
+            document.getElementById("stat-enhanced").textContent = "--";
+            document.getElementById("stat-budget").textContent = "--";
+            return;
+          }
+
+          var prodSum = 0,
+            enhSum = 0,
+            costSum = 0,
+            prodCount = 0,
+            enhCount = 0;
+          for (var i = 0; i < resultsData.length; i++) {
+            var r = resultsData[i];
+            var ps = r.production_score || r.productionScore;
+            var es = r.enhanced_score || r.enhancedScore;
+            var cost = r.cost_usd !== undefined ? r.cost_usd : r.costUsd;
+            if (ps && ps.average !== undefined) {
+              prodSum += ps.average;
+              prodCount++;
+            }
+            if (es && es.composite !== undefined) {
+              enhSum += es.composite;
+              enhCount++;
+            }
+            if (cost !== undefined) costSum += cost;
+          }
+
+          document.getElementById("stat-prod").textContent =
+            prodCount > 0 ? (prodSum / prodCount).toFixed(2) : "--";
+          document.getElementById("stat-enhanced").textContent =
+            enhCount > 0 ? (enhSum / enhCount).toFixed(2) : "--";
+          document.getElementById("stat-budget").textContent =
+            "$" + costSum.toFixed(4);
+        }
+
+        function esc(s) {
+          if (s === null || s === undefined) return "";
+          var div = document.createElement("div");
+          div.textContent = String(s);
+          return div.innerHTML;
+        }
+
+        function renderResults() {
+          var container = document.getElementById("results-container");
+
+          if (resultsData.length === 0) {
+            container.textContent = "";
+            var emptyDiv = document.createElement("div");
+            emptyDiv.className = "empty";
+            emptyDiv.textContent = "No experiment results yet.";
+            container.appendChild(emptyDiv);
+            return;
+          }
+
+          // Build table using DOM API for safety
+          var table = document.createElement("table");
+          var thead = document.createElement("thead");
+          var headerRow = document.createElement("tr");
+          var headers = [
+            "Experiment",
+            "Section",
+            "Fixture",
+            "Prod Score",
+            "Enhanced",
+            "Divergence",
+            "Cost",
+            "Duration",
+            "Time",
+          ];
+          for (var h = 0; h < headers.length; h++) {
+            var th = document.createElement("th");
+            th.textContent = headers[h];
+            headerRow.appendChild(th);
+          }
+          thead.appendChild(headerRow);
+          table.appendChild(thead);
+
+          var tbody = document.createElement("tbody");
+          for (var i = 0; i < resultsData.length; i++) {
+            var r = resultsData[i];
+            var ps = r.production_score || r.productionScore || {};
+            var es = r.enhanced_score || r.enhancedScore || {};
+            var prodAvg = ps.average !== undefined ? ps.average : null;
+            var enhComp = es.composite !== undefined ? es.composite : null;
+            var tr = document.createElement("tr");
+
+            // Experiment type + params
+            var td1 = document.createElement("td");
+            var badge1 = document.createElement("span");
+            badge1.className = "badge badge-type";
+            badge1.textContent = r.experiment_type || r.experimentId || "--";
+            td1.appendChild(badge1);
+            if (r.parameters) {
+              var paramSpan = document.createElement("span");
+              paramSpan.style.cssText =
+                "margin-left:6px;color:#8b949e;font-size:0.7rem";
+              paramSpan.textContent = JSON.stringify(r.parameters);
+              td1.appendChild(paramSpan);
+            }
+            tr.appendChild(td1);
+
+            // Section
+            var td2 = document.createElement("td");
+            var badge2 = document.createElement("span");
+            badge2.className = "badge badge-section";
+            badge2.textContent = r.section_type || r.sectionType || "--";
+            td2.appendChild(badge2);
+            tr.appendChild(td2);
+
+            // Fixture
+            var td3 = document.createElement("td");
+            var badge3 = document.createElement("span");
+            badge3.className =
+              "badge " +
+              difficultyClass(r.fixture_difficulty || r.fixtureDifficulty);
+            badge3.textContent = (r.fixture_id || r.fixtureId || "--").replace(
+              "static-",
+              "",
+            );
+            td3.appendChild(badge3);
+            tr.appendChild(td3);
+
+            // Prod Score
+            var td4 = document.createElement("td");
+            if (prodAvg !== null) {
+              td4.className = scoreClass(prodAvg / 10);
+              td4.textContent = prodAvg.toFixed(1);
+            } else {
+              td4.textContent = "--";
+            }
+            tr.appendChild(td4);
+
+            // Enhanced
+            var td5 = document.createElement("td");
+            if (enhComp !== null) {
+              td5.className = scoreClass(enhComp / 10);
+              td5.textContent = enhComp.toFixed(1);
+            } else {
+              td5.textContent = "--";
+            }
+            tr.appendChild(td5);
+
+            // Divergence
+            var td6 = document.createElement("td");
+            td6.textContent =
+              r.divergence !== undefined ? r.divergence.toFixed(2) : "--";
+            tr.appendChild(td6);
+
+            // Cost
+            var td7 = document.createElement("td");
+            td7.className = "cost";
+            td7.textContent = formatCost(
+              r.cost_usd !== undefined ? r.cost_usd : r.costUsd,
+            );
+            tr.appendChild(td7);
+
+            // Duration
+            var td8 = document.createElement("td");
+            td8.className = "duration";
+            td8.textContent = formatDuration(r.duration_ms || r.durationMs);
+            tr.appendChild(td8);
+
+            // Time
+            var td9 = document.createElement("td");
+            td9.className = "duration";
+            td9.textContent = formatTime(r.created_at || r.timestamp);
+            tr.appendChild(td9);
+
+            tbody.appendChild(tr);
+          }
+          table.appendChild(tbody);
+
+          container.textContent = "";
+          container.appendChild(table);
+        }
+
+        function renderStaged() {
+          var container = document.getElementById("staged-container");
+
+          if (stagedData.length === 0) {
+            container.textContent = "";
+            var emptyDiv = document.createElement("div");
+            emptyDiv.className = "empty";
+            emptyDiv.textContent = "No staged configs awaiting promotion.";
+            container.appendChild(emptyDiv);
+            return;
+          }
+
+          var table = document.createElement("table");
+          var thead = document.createElement("thead");
+          var headerRow = document.createElement("tr");
+          var headers = ["ID", "Parameters", "Created", "Action"];
+          for (var h = 0; h < headers.length; h++) {
+            var th = document.createElement("th");
+            th.textContent = headers[h];
+            headerRow.appendChild(th);
+          }
+          thead.appendChild(headerRow);
+          table.appendChild(thead);
+
+          var tbody = document.createElement("tbody");
+          for (var i = 0; i < stagedData.length; i++) {
+            var c = stagedData[i];
+            var tr = document.createElement("tr");
+
+            var td1 = document.createElement("td");
+            td1.textContent = c.id;
+            tr.appendChild(td1);
+
+            var td2 = document.createElement("td");
+            var code = document.createElement("code");
+            code.textContent = JSON.stringify(c.parameters || {});
+            td2.appendChild(code);
+            tr.appendChild(td2);
+
+            var td3 = document.createElement("td");
+            td3.className = "duration";
+            td3.textContent = formatTime(c.createdAt);
+            tr.appendChild(td3);
+
+            var td4 = document.createElement("td");
+            var btn = document.createElement("button");
+            btn.className = "btn-promote";
+            btn.textContent = "Promote";
+            btn.setAttribute("data-id", c.id);
+            btn.addEventListener("click", function () {
+              var configId = this.getAttribute("data-id");
+              window.promoteConfig(configId, this);
+            });
+            td4.appendChild(btn);
+            tr.appendChild(td4);
+
+            tbody.appendChild(tr);
+          }
+          table.appendChild(tbody);
+
+          container.textContent = "";
+          container.appendChild(table);
+        }
+
+        function drawChart() {
+          var canvas = document.getElementById("chart");
+          var ctx = canvas.getContext("2d");
+
+          var rect = canvas.getBoundingClientRect();
+          canvas.width = rect.width * window.devicePixelRatio;
+          canvas.height = rect.height * window.devicePixelRatio;
+          ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+
+          var w = rect.width;
+          var h = rect.height;
+          var pad = { top: 20, right: 20, bottom: 30, left: 50 };
+          var plotW = w - pad.left - pad.right;
+          var plotH = h - pad.top - pad.bottom;
+
+          ctx.clearRect(0, 0, w, h);
+
+          var points = resultsData
+            .filter(function (r) {
+              var ps = r.production_score || r.productionScore;
+              return (
+                ps && ps.average !== undefined && (r.created_at || r.timestamp)
+              );
+            })
+            .map(function (r) {
+              var ps = r.production_score || r.productionScore;
+              return {
+                t: new Date(r.created_at || r.timestamp).getTime(),
+                score: ps.average,
+              };
+            })
+            .sort(function (a, b) {
+              return a.t - b.t;
+            });
+
+          var enhPoints = resultsData
+            .filter(function (r) {
+              var es = r.enhanced_score || r.enhancedScore;
+              return (
+                es &&
+                es.composite !== undefined &&
+                (r.created_at || r.timestamp)
+              );
+            })
+            .map(function (r) {
+              var es = r.enhanced_score || r.enhancedScore;
+              return {
+                t: new Date(r.created_at || r.timestamp).getTime(),
+                score: es.composite,
+              };
+            })
+            .sort(function (a, b) {
+              return a.t - b.t;
+            });
+
+          if (points.length === 0 && enhPoints.length === 0) {
+            ctx.fillStyle = "#8b949e";
+            ctx.font = "13px monospace";
+            ctx.textAlign = "center";
+            ctx.fillText("No data to chart yet", w / 2, h / 2);
+            return;
+          }
+
+          var allPoints = points.concat(enhPoints);
+          var minT = Infinity,
+            maxT = -Infinity;
+          for (var i = 0; i < allPoints.length; i++) {
+            if (allPoints[i].t < minT) minT = allPoints[i].t;
+            if (allPoints[i].t > maxT) maxT = allPoints[i].t;
+          }
+          var rangeT = maxT - minT || 1;
+
+          function xPos(t) {
+            return pad.left + ((t - minT) / rangeT) * plotW;
+          }
+          function yPos(s) {
+            return pad.top + (1 - s / 10) * plotH;
+          }
+
+          // Grid lines
+          ctx.strokeStyle = "#21262d";
+          ctx.lineWidth = 1;
+          for (var g = 0; g <= 5; g++) {
+            var y = yPos(g * 2);
+            ctx.beginPath();
+            ctx.moveTo(pad.left, y);
+            ctx.lineTo(w - pad.right, y);
+            ctx.stroke();
+          }
+
+          // Y-axis labels
+          ctx.fillStyle = "#8b949e";
+          ctx.font = "10px monospace";
+          ctx.textAlign = "right";
+          for (var g = 0; g <= 5; g++) {
+            ctx.fillText((g * 2).toFixed(0), pad.left - 6, yPos(g * 2) + 4);
+          }
+
+          function drawLine(pts, color) {
+            if (pts.length === 0) return;
+            if (pts.length < 2) {
+              ctx.fillStyle = color;
+              ctx.beginPath();
+              ctx.arc(xPos(pts[0].t), yPos(pts[0].score), 4, 0, Math.PI * 2);
+              ctx.fill();
+              return;
+            }
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(xPos(pts[0].t), yPos(pts[0].score));
+            for (var i = 1; i < pts.length; i++) {
+              ctx.lineTo(xPos(pts[i].t), yPos(pts[i].score));
+            }
+            ctx.stroke();
+            ctx.fillStyle = color;
+            for (var i = 0; i < pts.length; i++) {
+              ctx.beginPath();
+              ctx.arc(xPos(pts[i].t), yPos(pts[i].score), 3, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+
+          drawLine(points, "#58a6ff");
+          drawLine(enhPoints, "#d2a8ff");
+
+          // Legend
+          ctx.font = "10px monospace";
+          var legendY = pad.top - 6;
+          ctx.fillStyle = "#58a6ff";
+          ctx.fillRect(w - pad.right - 200, legendY - 8, 10, 10);
+          ctx.fillStyle = "#8b949e";
+          ctx.textAlign = "left";
+          ctx.fillText("Production", w - pad.right - 186, legendY);
+          ctx.fillStyle = "#d2a8ff";
+          ctx.fillRect(w - pad.right - 100, legendY - 8, 10, 10);
+          ctx.fillStyle = "#8b949e";
+          ctx.fillText("Enhanced", w - pad.right - 86, legendY);
+        }
+
+        window.promoteConfig = async function (id, btn) {
+          btn.disabled = true;
+          btn.textContent = "Promoting...";
+          try {
+            var res = await fetch("/api/promote/" + encodeURIComponent(id), {
+              method: "POST",
+            });
+            var data = await res.json();
+            if (data.success) {
+              btn.textContent = "Promoted";
+              btn.style.background = "#1f6feb";
+              setTimeout(function () {
+                fetchStaged();
+              }, 1000);
+            } else {
+              btn.textContent = "Failed";
+              btn.style.background = "#da3633";
+              setTimeout(function () {
+                btn.textContent = "Promote";
+                btn.disabled = false;
+                btn.style.background = "";
+              }, 3000);
+            }
+          } catch (e) {
+            btn.textContent = "Error";
+            btn.style.background = "#da3633";
+            setTimeout(function () {
+              btn.textContent = "Promote";
+              btn.disabled = false;
+              btn.style.background = "";
+            }, 3000);
+          }
+        };
+
+        function tick() {
+          countdown--;
+          if (countdown <= 0) {
+            countdown = 60;
+            refresh();
+          }
+          document.getElementById("timer").textContent =
+            "Refreshing in " + countdown + "s";
+        }
+
+        function renderRecommendations() {
+          var container = document.getElementById("recs-container");
+          container.textContent = "";
+          var recs = [];
+
+          var total = resultsData.length;
+          var staged = stagedData.length;
+
+          // Group results by experiment_type + section_type
+          var groups = {};
+          for (var i = 0; i < resultsData.length; i++) {
+            var r = resultsData[i];
+            var key =
+              (r.experiment_type || "unknown") +
+              ":" +
+              (r.section_type || "unknown");
+            if (!groups[key]) groups[key] = [];
+            var es = r.enhanced_score || {};
+            if (es.composite !== undefined) groups[key].push(es.composite);
+          }
+
+          // Find best performing combos
+          var bestBySection = {};
+          for (var key in groups) {
+            var parts = key.split(":");
+            var expType = parts[0];
+            var section = parts[1];
+            var scores = groups[key];
+            var avg =
+              scores.reduce(function (a, b) {
+                return a + b;
+              }, 0) / scores.length;
+            if (!bestBySection[section] || avg > bestBySection[section].avg) {
+              bestBySection[section] = {
+                expType: expType,
+                avg: avg,
+                count: scores.length,
+              };
+            }
+          }
+
+          // --- Recommendations based on state ---
+
+          if (total === 0) {
+            recs.push({
+              type: "waiting",
+              title: "Waiting for first experiment",
+              detail:
+                "Experiments run every 5 minutes via GitHub Actions. The first result should appear shortly.",
+            });
+          } else if (total < 10) {
+            var pct = Math.round((total / 10) * 100);
+            recs.push({
+              type: "info",
+              title: "Collecting baseline data (" + total + "/10 experiments)",
+              detail:
+                "Need at least 10 samples per parameter combination before statistical winner detection kicks in. Currently have " +
+                total +
+                " total experiments across all combinations.",
+              progress: pct,
+              progressColor: "blue",
+            });
+          }
+
+          // Check sample sizes per group
+          var minSamplesNeeded = 10;
+          var groupsReady = 0;
+          var groupsTotal = 0;
+          var closestGroup = null;
+          var closestCount = 0;
+          for (var key in groups) {
+            groupsTotal++;
+            if (groups[key].length >= minSamplesNeeded) {
+              groupsReady++;
+            } else if (groups[key].length > closestCount) {
+              closestCount = groups[key].length;
+              closestGroup = key;
+            }
+          }
+
+          if (groupsTotal > 0 && total >= 10) {
+            if (groupsReady > 0) {
+              recs.push({
+                type: "info",
+                title:
+                  groupsReady +
+                  " of " +
+                  groupsTotal +
+                  " parameter combos have enough data for winner detection",
+                detail:
+                  "Groups with 10+ samples can be statistically tested. The config stager uses Welch's t-test (p<0.05, >5% improvement) to detect winners.",
+              });
+            } else {
+              var pct2 = Math.round((closestCount / minSamplesNeeded) * 100);
+              recs.push({
+                type: "waiting",
+                title:
+                  "Closest group to winner detection: " +
+                  (closestGroup || "").replace(":", " / ") +
+                  " (" +
+                  closestCount +
+                  "/" +
+                  minSamplesNeeded +
+                  ")",
+                detail:
+                  "Each parameter combination needs " +
+                  minSamplesNeeded +
+                  " samples before winner detection. At 1 experiment per 5 minutes, this takes ~" +
+                  Math.ceil((minSamplesNeeded - closestCount) * 5) +
+                  " more minutes for the closest group.",
+                progress: pct2,
+                progressColor: "yellow",
+              });
+            }
+          }
+
+          // Staged configs ready to promote
+          if (staged > 0) {
+            recs.push({
+              type: "action",
+              title:
+                staged +
+                " winning config" +
+                (staged > 1 ? "s" : "") +
+                " ready to promote!",
+              detail:
+                "These configs beat the baseline with statistical significance. Click <b>Promote</b> below to make them active.<br><br>Promoted configs available at: <code>GET /api/v1/optimal-config?section=...</code>",
+            });
+          }
+
+          // Show best performers per section
+          var bestKeys = Object.keys(bestBySection);
+          if (bestKeys.length > 0 && total >= 5) {
+            var lines = bestKeys
+              .map(function (s) {
+                var b = bestBySection[s];
+                return (
+                  "<code>" +
+                  s +
+                  "</code>: best = <b>" +
+                  b.expType +
+                  "</b> (avg " +
+                  b.avg.toFixed(1) +
+                  "/10, n=" +
+                  b.count +
+                  ")"
+                );
+              })
+              .join("<br>");
+            recs.push({
+              type: "info",
+              title: "Current leaders by section type",
+              detail: lines,
+            });
+          }
+
+          // Integration reminder
+          if (staged > 0) {
+            recs.push({
+              type: "info",
+              title: "Integration with Boltline CMS",
+              detail:
+                "After promoting, fetch optimal configs for content generation:<br><code>const config = await fetch(AUTORESEARCH_URL + '/api/v1/optimal-config?section=' + sectionType)</code><br>Apply <code>config.temperature</code>, <code>config.evidenceCount</code>, and <code>config.promptStyle</code> to your content generation.",
+            });
+          }
+
+          // Experiment coverage
+          if (total > 0) {
+            var expTypes = {};
+            for (var i = 0; i < resultsData.length; i++) {
+              expTypes[resultsData[i].experiment_type || "unknown"] =
+                (expTypes[resultsData[i].experiment_type || "unknown"] || 0) +
+                1;
+            }
+            var typeList = Object.keys(expTypes)
+              .map(function (t) {
+                return t + " (" + expTypes[t] + ")";
+              })
+              .join(", ");
+            recs.push({
+              type: "info",
+              title: "Experiment coverage",
+              detail:
+                "Running: " +
+                typeList +
+                "<br>The runner cycles through temperature, evidence count, prompt style, output length, and model across 3 Boltline pages and 7 content types.",
+            });
+          }
+
+          // Render
+          if (recs.length === 0) {
+            var emptyDiv = document.createElement("div");
+            emptyDiv.className = "empty";
+            emptyDiv.textContent = "No recommendations yet.";
+            container.appendChild(emptyDiv);
+            return;
+          }
+
+          for (var i = 0; i < recs.length; i++) {
+            var rec = recs[i];
+            var item = document.createElement("div");
+            item.className = "rec-item " + rec.type;
+
+            var title = document.createElement("div");
+            title.className = "rec-title";
+            var icon =
+              rec.type === "action"
+                ? ">>>"
+                : rec.type === "waiting"
+                  ? "..."
+                  : "---";
+            title.textContent = icon + " " + rec.title;
+            item.appendChild(title);
+
+            var detail = document.createElement("div");
+            detail.className = "rec-detail";
+            detail.innerHTML = rec.detail;
+            item.appendChild(detail);
+
+            if (rec.progress !== undefined) {
+              var prog = document.createElement("div");
+              prog.className = "rec-progress";
+              var bar = document.createElement("div");
+              bar.className =
+                "rec-progress-bar " + (rec.progressColor || "blue");
+              bar.style.width = Math.min(100, rec.progress) + "%";
+              prog.appendChild(bar);
+              item.appendChild(prog);
+            }
+
+            container.appendChild(item);
+          }
+        }
+
+        function refresh() {
+          fetchResults();
+          fetchStaged();
+        }
+
+        refresh();
+        setInterval(tick, 1000);
+      })();
+    </script>
+  </body>
+</html>
